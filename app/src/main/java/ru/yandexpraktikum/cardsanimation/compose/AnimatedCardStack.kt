@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import ru.yandexpraktikum.cardsanimation.model.CardData
 import kotlin.math.abs
 
 data class CardSwapAnimationState(

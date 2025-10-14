@@ -7,6 +7,8 @@ import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.cardview.widget.CardView
+import ru.yandexpraktikum.cardsanimation.R
+import ru.yandexpraktikum.cardsanimation.model.CardData
 import java.lang.Math.toRadians
 import kotlin.math.cos
 import kotlin.math.sin

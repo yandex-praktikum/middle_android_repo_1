@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
+import ru.yandexpraktikum.cardsanimation.model.CardData
 import kotlin.math.abs
 
 class AnimatedCardStackView @JvmOverloads constructor(
