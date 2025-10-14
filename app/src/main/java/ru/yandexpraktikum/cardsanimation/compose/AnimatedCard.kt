@@ -18,6 +18,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.ANIMATION_DURATION
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.BASE_ELEVATION
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.CARD_CORNER_RADIUS
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.CARD_HEIGHT
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.CARD_WIDTH
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.QUICK_ANIMATION_DURATION
+import ru.yandexpraktikum.cardsanimation.compose.enums.AnimationStep
 import ru.yandexpraktikum.cardsanimation.model.CardData
 import kotlin.math.cos
 import kotlin.math.sin
@@ -27,9 +34,9 @@ fun AnimatedCard(
     cardIndex: Int,
     cardData: CardData,
     targetRotation: Float,
-    animationStep: Int,
+    animationStep: AnimationStep,
     isAnimating: Boolean,
-    onAnimationStepComplete: ((step: Int) -> Unit)? = null
+    onAnimationStepComplete: ((step: AnimationStep) -> Unit)? = null
 ) {
     val density = LocalDensity.current
 
@@ -38,14 +45,14 @@ fun AnimatedCard(
 
     val animatedRotation by animateFloatAsState(
         targetValue = when {
-            animationStep == 3 -> finalRotation
+            animationStep == AnimationStep.FINAL_ROTATION -> finalRotation
             isAnimating -> targetRotation
             else -> targetRotation
         },
-        animationSpec = tween(durationMillis = if (animationStep == 3) 300 else 500),
+        animationSpec = tween(durationMillis = if (animationStep == AnimationStep.FINAL_ROTATION) QUICK_ANIMATION_DURATION else ANIMATION_DURATION),
         finishedListener = {
-            if (animationStep == 3 && isAnimating) {
-                onAnimationStepComplete?.invoke(3)
+            if (animationStep == AnimationStep.FINAL_ROTATION && isAnimating) {
+                onAnimationStepComplete?.invoke(AnimationStep.FINAL_ROTATION)
             }
         },
         label = "rotation"
@@ -53,12 +60,12 @@ fun AnimatedCard(
 
     val animatedTranslationX by animateFloatAsState(
         targetValue = when {
-            cardIndex == 0 && isAnimating && animationStep == 1 -> {
+            cardIndex == 0 && isAnimating && animationStep == AnimationStep.MOVE_OUT -> {
                 val moveDistance = with(density) { 50.dp.toPx() }
                 val rotationRad = Math.toRadians(targetRotation.toDouble())
                 moveDistance * cos(rotationRad).toFloat()
             }
-            cardIndex == 0 && isAnimating && animationStep == 2 -> {
+            cardIndex == 0 && isAnimating && animationStep == AnimationStep.MOVE_BACK -> {
                 0f
             }
             else -> 0f
@@ -66,9 +73,10 @@ fun AnimatedCard(
         animationSpec = tween(durationMillis = 300),
         finishedListener = {
             if (isAnimating && cardIndex == 0) {
-                when (animationStep) {
-                    1 -> onAnimationStepComplete?.invoke(1)
-                    2 -> onAnimationStepComplete?.invoke(2)
+                if (animationStep == AnimationStep.MOVE_BACK) {
+                    onAnimationStepComplete?.invoke(AnimationStep.MOVE_OUT)
+                } else if(animationStep==AnimationStep.MOVE_OUT) {
+                    onAnimationStepComplete?.invoke(AnimationStep.MOVE_BACK)
                 }
             }
         },
@@ -77,12 +85,12 @@ fun AnimatedCard(
 
     val animatedTranslationY by animateFloatAsState(
         targetValue = when {
-            cardIndex == 0 && isAnimating && animationStep == 1 -> {
+            cardIndex == 0 && isAnimating && animationStep == AnimationStep.MOVE_OUT -> {
                 val moveDistance = with(density) { 50.dp.toPx() }
                 val rotationRad = Math.toRadians(targetRotation.toDouble())
                 moveDistance * sin(rotationRad).toFloat()
             }
-            cardIndex == 0 && isAnimating && animationStep == 2 -> {
+            cardIndex == 0 && isAnimating && animationStep == AnimationStep.MOVE_BACK -> {
                 0f
             }
             else -> 0f
@@ -91,10 +99,10 @@ fun AnimatedCard(
         label = "translationY"
     )
 
-    val shouldBringToFront = isAnimating && animationStep >= 2 && cardIndex == 0
+    val shouldBringToFront = isAnimating && animationStep >= AnimationStep.MOVE_BACK && cardIndex == 0
     Card(
         modifier = Modifier
-            .size(width = 100.dp, height = 160.dp)
+            .size(width = CARD_WIDTH, height = CARD_HEIGHT)
             .graphicsLayer {
                 translationX =  animatedTranslationX
                 translationY =  animatedTranslationY
@@ -108,9 +116,9 @@ fun AnimatedCard(
                     modifier
                 }
             },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(CARD_CORNER_RADIUS),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = (4 + cardIndex).dp
+            defaultElevation = (BASE_ELEVATION + cardIndex).dp
         )
     ) {
         Image(

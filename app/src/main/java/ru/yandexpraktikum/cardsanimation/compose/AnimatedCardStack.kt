@@ -12,12 +12,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.DRAG_THRESHOLD
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.FAN_ROTATION_ANGLE
+import ru.yandexpraktikum.cardsanimation.compose.AnimationConstants.MAX_ROTATION_ANGLE
+import ru.yandexpraktikum.cardsanimation.compose.enums.AnimationStep
 import ru.yandexpraktikum.cardsanimation.model.CardData
 import kotlin.math.abs
 
 data class CardSwapAnimationState(
     val isAnimating: Boolean = false,
-    val animationStep: Int = 0
+    val animationStep: AnimationStep = AnimationStep.IDLE
 )
 
 /**
@@ -31,10 +35,10 @@ fun calculateCardRotation(
     if (cardCount <= 1) return 0f
 
     return if (isRotated) {
-        val angleStep = 180f / (cardCount - 1)
+        val angleStep = FAN_ROTATION_ANGLE / (cardCount - 1)
         90f - (cardIndex * angleStep)
     } else {
-        val angleStep = 45f / (cardCount - 1)
+        val angleStep = MAX_ROTATION_ANGLE / (cardCount - 1)
         22.5f - (cardIndex * angleStep)
     }
 }
@@ -51,12 +55,12 @@ fun AnimatedCardStack(cards: List<CardData>) {
 
     var animationState by remember { mutableStateOf(CardSwapAnimationState()) }
 
-    val onStepChange: (Int) -> Unit = { newStep ->
+    val onStepChange: (AnimationStep) -> Unit = { newStep ->
         animationState = animationState.copy(animationStep = newStep)
     }
 
     val onAnimationComplete: () -> Unit = {
-        animationState = animationState.copy(isAnimating = false, animationStep = 0)
+        animationState = animationState.copy(isAnimating = false, animationStep = AnimationStep.IDLE)
 
         currentCards = reorderCards(currentCards)
     }
@@ -77,7 +81,7 @@ fun AnimatedCardStack(cards: List<CardData>) {
                 onDragEnd = {
                     if (!animationState.isAnimating) {
 
-                        val threshold = 100f
+                        val threshold = DRAG_THRESHOLD
                         val isVerticalDominant = abs(verticalDragOffset) > abs(horizontalDragOffset)
                         val isHorizontalDominant = abs(horizontalDragOffset) > abs(verticalDragOffset)
 
@@ -91,7 +95,7 @@ fun AnimatedCardStack(cards: List<CardData>) {
                             isHorizontalDominant && abs(horizontalDragOffset) > threshold -> {
                                 animationState = animationState.copy(
                                     isAnimating = true,
-                                    animationStep = 1
+                                    animationStep = AnimationStep.MOVE_OUT
                                 )
                                 handleHorizontalSwipe(
                                     horizontalDragDistance = horizontalDragOffset,
@@ -141,7 +145,7 @@ fun reorderCards(cards: List<CardData>): List<CardData> {
 fun handleVerticalSwipe(
     verticalDragDistance: Float,
     onFanStateChange: (Boolean) -> Unit,
-    threshold: Float = 100f
+    threshold: Float = DRAG_THRESHOLD
 ) {
     when {
         verticalDragDistance < -threshold -> {
@@ -156,7 +160,7 @@ fun handleVerticalSwipe(
 fun handleHorizontalSwipe(
     horizontalDragDistance: Float,
     onCardsReorder: () -> Unit,
-    threshold: Float = 100f
+    threshold: Float = DRAG_THRESHOLD
 ) {
     val absoluteDistance = abs(horizontalDragDistance)
 
@@ -166,16 +170,17 @@ fun handleHorizontalSwipe(
 }
 
 fun handleAnimationStepComplete(
-    step: Int,
+    step: AnimationStep,
     cardIndex: Int,
-    onStepChange: (Int) -> Unit,
+    onStepChange: (AnimationStep) -> Unit,
     onAnimationComplete: () -> Unit
 ) {
     if (cardIndex == 0) {
         when (step) {
-            1 -> onStepChange(2)
-            2 -> onStepChange(3)
-            3 -> onAnimationComplete()
+            AnimationStep.MOVE_OUT -> onStepChange(AnimationStep.MOVE_BACK)
+            AnimationStep.MOVE_BACK -> onStepChange(AnimationStep.FINAL_ROTATION)
+            AnimationStep.FINAL_ROTATION -> onAnimationComplete()
+            AnimationStep.IDLE -> return
         }
     }
 }
