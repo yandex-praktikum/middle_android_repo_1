@@ -1,5 +1,9 @@
 package ru.yandexpraktikum.cardsanimation.views
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -16,44 +20,99 @@ class AnimatedCardView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs, defStyleAttr) {
 
     val cardView: CardView
-    private val cardImageView: ImageView
+    private val imageView: ImageView
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_view, this, true)
 
-        cardView = this.getChildAt(0) as CardView
-        cardImageView = findViewById(R.id.cardImage)
+        cardView = getChildAt(0) as CardView
+        imageView = findViewById(R.id.cardImage)
 
+        updatePivot()
+    }
+
+    override fun onSizeChanged(newWidth: Int, newHeight: Int, oldWidth: Int, oldHeight: Int) {
+        super.onSizeChanged(newWidth, newHeight, oldWidth, oldHeight)
+        updatePivot()
+    }
+
+    private fun updatePivot() {
         pivotX = width / 2f
         pivotY = height.toFloat()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        pivotX = w / 2f
-        pivotY = h.toFloat()
+    fun setImage(data: CardData) {
+        imageView.setImageResource(data.imageResId)
     }
 
-    fun setCardData(cardData: CardData) {
-        cardImageView.setImageResource(cardData.imageResId)
+    fun setStackLevel(level: Int) {
+        val elevation = (4 + level) * resources.displayMetrics.density
+        cardView.cardElevation = elevation
     }
 
-    fun setStackPosition(index: Int) {
-        cardView.cardElevation = (4 + index * 1).toFloat() * resources.displayMetrics.density
+    fun rotateTo(angle: Float, duration: Long = 300L) {
+        ObjectAnimator.ofFloat(this, "rotation", angle)
+            .apply {
+                this.duration = duration
+                start()
+            }
     }
 
-    // TODO: [Задание 1] Добавьте методы для анимации
-    // Подсказка: используйте ObjectAnimator для плавной анимации
+    fun shiftRight(onComplete: (() -> Unit)? = null) {
+        val distance = 50f * resources.displayMetrics.density
+        val rotationRad = Math.toRadians(rotation.toDouble())
 
-    // TODO: [Задание 1] Добавьте метод для анимации поворота карты (чтобы был плавный эффект раскрытия/закрытия колоды)
-    // fun animateToRotation(targetRotation: Float, duration: Long = 300) { ... }
+        val deltaX = distance * Math.cos(rotationRad).toFloat()
+        val deltaY = distance * Math.sin(rotationRad).toFloat()
 
-    // TODO: [Задание 5, шаг 1] Добавьте метод для анимации перетасовки карт (первым шагом нижняя карта двигается вправо)
-    // fun moveCardRight(onComplete: (() -> Unit)? = null) { ... }
+        val animatorX = ObjectAnimator.ofFloat(this, "x", x, x + deltaX)
+        val animatorY = ObjectAnimator.ofFloat(this, "y", y, y + deltaY)
 
-    // TODO: [Задание 5, шаг 2] Добавьте метод для анимации выдвижения нижней карты наверх
-    // fun moveCardToTop(onComplete: (() -> Unit)? = null) { ... }
+        AnimatorSet().apply {
+            playTogether(animatorX, animatorY)
+            this.duration = 300
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    onComplete?.invoke()
+                }
+            })
+            start()
+        }
+    }
 
-    // TODO: [Задание 5, шаг 3] Добавьте анимацию перемещения всей колоды карты в желаемую позицию
-    // fun adjustToFinalPosition(finalRotation: Float, finalZOrder: Int, onComplete: (() -> Unit)? = null) { ... }
-} 
+    fun centerInParent(onComplete: (() -> Unit)? = null) {
+        val parentContainer = parent as? FrameLayout ?: return
+
+        val cardWidth = 100f * resources.displayMetrics.density
+        val cardHeight = 160f * resources.displayMetrics.density
+        val targetX = parentContainer.width / 2f - cardWidth / 2f
+        val targetY = parentContainer.height / 2f - cardHeight / 2f
+
+        val animatorX = ObjectAnimator.ofFloat(this, "x", x, targetX)
+        val animatorY = ObjectAnimator.ofFloat(this, "y", y, targetY)
+
+        AnimatorSet().apply {
+            playTogether(animatorX, animatorY)
+            this.duration = 300
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    onComplete?.invoke()
+                }
+            })
+            start()
+        }
+    }
+
+    fun snapToPosition(finalAngle: Float, stackLevel: Int, onComplete: (() -> Unit)? = null) {
+        ObjectAnimator.ofFloat(this, "rotation", rotation, finalAngle).apply {
+            duration = 300
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) {
+                    setStackLevel(stackLevel)
+                    onComplete?.invoke()
+                }
+            })
+            start()
+        }
+    }
+}
