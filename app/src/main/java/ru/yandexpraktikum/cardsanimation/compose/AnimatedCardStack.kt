@@ -1,5 +1,6 @@
 package ru.yandexpraktikum.cardsanimation.compose
 
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -9,8 +10,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import ru.yandexpraktikum.cardsanimation.model.CardData
+import kotlin.math.abs
 
+data class CardSwapAnimationState(
+    val isAnimating: Boolean = false,
+    val animationStep: Int = 0
+)
 /**
  * Метод для вычисления поворота карты в конкретной позиции
  */
@@ -33,24 +40,69 @@ fun calculateCardRotation(
 @Composable
 fun AnimatedCardStack(cards: List<CardData>) {
     val cardCount = cards.size
+    var reorderCards by remember { mutableStateOf(cards) }
+    var animationState by remember { mutableStateOf(CardSwapAnimationState()) }
     var isRotated by remember { mutableStateOf(false) }
 
-    // TODO: [Задание 2] Добавьте обработку жестов
-    // Подсказка: Используйте Modifier.pointerInput() с методом detectDragGestures()
-
     Box(
-        modifier = Modifier,
+        modifier = Modifier
+            .pointerInput(Unit) {
+                var verticalDragOffset = 0f
+                var horizontalDragOffset = 0f
+                val verticalThreshold = 50f
+                val horizontalThreshold = 50f
+                detectDragGestures(
+                    onDragEnd = {
+                        if (!animationState.isAnimating) {
+                            val isVertical =
+                                if (abs(horizontalDragOffset) < abs(verticalDragOffset)) true else false
+                            if (isVertical) {
+                                if (verticalDragOffset < -verticalThreshold) {
+                                    isRotated = true
+                                } else if (verticalDragOffset > verticalThreshold) {
+                                    isRotated = false
+                                }
+                            } else {
+                                if (horizontalDragOffset > horizontalThreshold || horizontalDragOffset < -horizontalThreshold) {
+                                    animationState =
+                                        animationState.copy(isAnimating = true, animationStep = 1)
+                                }
+                            }
+                        }
+                        verticalDragOffset = 0f
+                        horizontalDragOffset = 0f
+                    }
+                ) { _, offset ->
+                    verticalDragOffset += offset.y
+                    horizontalDragOffset += offset.x
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
-        cards.forEachIndexed { i, cardData ->
+        reorderCards.forEachIndexed { i, cardData ->
             key(cardData.imageResId) {
                 val targetRotation = calculateCardRotation(i, cardCount, isRotated)
 
                 AnimatedCard(
                     cardIndex = i,
                     targetRotation = targetRotation,
-                    cardData = cardData
-                    // TODO: [Задание 5] Здесь добавьте параметры анимации карты
+                    cardData = cardData,
+                    isAnimating = animationState.isAnimating,
+                    animationStep = animationState.animationStep,
+                    onAnimationStepComplete = { step ->
+                        when (step) {
+                            1 -> {
+                                animationState =
+                                    animationState.copy(isAnimating = true, animationStep = 2)
+                            }
+
+                            2 -> {
+                                animationState =
+                                    animationState.copy(isAnimating = false, animationStep = 0)
+                                if (i == 0) reorderCards = reorderCards(reorderCards)
+                            }
+                        }
+                    }
                 )
             }
         }
