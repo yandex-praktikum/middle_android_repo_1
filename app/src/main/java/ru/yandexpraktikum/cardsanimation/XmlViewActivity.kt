@@ -1,5 +1,6 @@
 package ru.yandexpraktikum.cardsanimation
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +26,8 @@ class XmlViewActivity : AppCompatActivity() {
             CardData(R.drawable.card_spades),
             CardData(R.drawable.card_diamond)
         )
-        cardStackView.setCards(customCards)
+        cardStackView.setCardsData(customCards)
     }
-} 
+}
+
+fun Float.dp(context: Context) = this * context.resources.displayMetrics.density
