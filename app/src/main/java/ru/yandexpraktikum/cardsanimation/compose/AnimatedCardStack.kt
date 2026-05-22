@@ -1,5 +1,6 @@
 package ru.yandexpraktikum.cardsanimation.compose
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,7 +40,10 @@ fun AnimatedCardStack(cards: List<CardData>) {
     // Подсказка: Используйте Modifier.pointerInput() с методом detectDragGestures()
 
     Box(
-        modifier = Modifier,
+        modifier = Modifier
+            .clickable {
+                isRotated = !isRotated
+            },
         contentAlignment = Alignment.Center
     ) {
         cards.forEachIndexed { i, cardData ->
