@@ -1,6 +1,7 @@
 package ru.yandexpraktikum.cardsanimation.compose
 
-import androidx.compose.foundation.clickable
+import android.util.Log
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -10,7 +11,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.pointerInput
 import ru.yandexpraktikum.cardsanimation.model.CardData
+import kotlin.math.abs
 
 /**
  * Метод для вычисления поворота карты в конкретной позиции
@@ -35,14 +39,40 @@ fun calculateCardRotation(
 fun AnimatedCardStack(cards: List<CardData>) {
     val cardCount = cards.size
     var isRotated by remember { mutableStateOf(false) }
+    var endOffset by remember { mutableStateOf(Offset.Zero) }
+    var startOffset by remember { mutableStateOf(Offset.Zero) }
 
     // TODO: [Задание 2] Добавьте обработку жестов
     // Подсказка: Используйте Modifier.pointerInput() с методом detectDragGestures()
 
     Box(
         modifier = Modifier
-            .clickable {
-                isRotated = !isRotated
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { offset ->
+                        startOffset = offset
+                    },
+                    onDragEnd = {
+                        // TODO: Обработка жестов в заданиях 3 и 4
+                        val verticalMovement = startOffset.y - endOffset.y
+                        val horizontalMovement = startOffset.x - endOffset.x
+
+                        Log.d("ComposeGestures", when {
+                            abs(verticalMovement) > abs(horizontalMovement) && verticalMovement < 0 -> "Вертикальный свайп вниз"
+                            abs(verticalMovement) > abs(horizontalMovement) && verticalMovement > 0 -> "Вертикальный свайп вверх"
+                            abs(horizontalMovement) > abs(verticalMovement) && horizontalMovement < 0 -> "Горизонтальный свайп вправо"
+                            abs(horizontalMovement) > abs(verticalMovement) && horizontalMovement > 0 -> "Горизонтальный свайп влево"
+                            else -> "Непонятный жест"
+                        })
+
+                        endOffset = Offset.Zero
+                        startOffset = Offset.Zero
+                    }
+                ) { change, dragAmount ->
+                    endOffset += dragAmount
+                    // Определяем направление свайпа
+                    change.consume()
+                }
             },
         contentAlignment = Alignment.Center
     ) {

@@ -26,8 +26,5 @@ class XmlViewActivity : AppCompatActivity() {
             CardData(R.drawable.card_diamond)
         )
         cardStackView.setCards(customCards)
-        cardStackView.setOnClickListener { view ->
-            (view as AnimatedCardStackView).click()
-        }
     }
 } 
