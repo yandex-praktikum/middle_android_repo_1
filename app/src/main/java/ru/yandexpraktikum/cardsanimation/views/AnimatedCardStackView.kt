@@ -19,11 +19,6 @@ class AnimatedCardStackView @JvmOverloads constructor(
     private val cards = mutableListOf<AnimatedCardView>()
     private var isRotated = false
 
-    fun click() {
-        isRotated = !isRotated
-        updateCardPositions()
-    }
-
     fun setCards(newCardDataList: List<CardData>) {
         cardDataList = newCardDataList
         setupCards()
@@ -107,8 +102,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
     // Подсказка: Используйте GestureDetector с методом onFling для обработки свайпов
     private val gestureDetector =
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-            var verticalMovement = 0f
-            var horizontalMovement = 0f
+            var verticalDragOffset = 0f
+            var horizontalDragOffset = 0f
 
             override fun onScroll(
                 e1: MotionEvent?,
@@ -116,8 +111,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 distanceX: Float,
                 distanceY: Float
             ): Boolean {
-                verticalMovement = distanceY
-                horizontalMovement = distanceX
+                verticalDragOffset = distanceY
+                horizontalDragOffset = distanceX
                 return super.onScroll(e1, e2, distanceX, distanceY)
             }
 
@@ -128,10 +123,18 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 velocityY: Float
             ): Boolean {
                 Log.d("ComposeGestures", when {
-                    abs(verticalMovement) > abs(horizontalMovement) && verticalMovement < 0 -> "Вертикальный свайп вниз"
-                    abs(verticalMovement) > abs(horizontalMovement) && verticalMovement > 0 -> "Вертикальный свайп вверх"
-                    abs(horizontalMovement) > abs(verticalMovement) && horizontalMovement < 0 -> "Горизонтальный свайп вправо"
-                    abs(horizontalMovement) > abs(verticalMovement) && horizontalMovement > 0 -> "Горизонтальный свайп влево"
+                    abs(verticalDragOffset) > abs(horizontalDragOffset) && verticalDragOffset < 0 -> {
+                        isRotated = false
+                        updateCardPositions()
+                        "Вертикальный свайп вниз"
+                    }
+                    abs(verticalDragOffset) > abs(horizontalDragOffset) && verticalDragOffset > 0 -> {
+                        isRotated = true
+                        updateCardPositions()
+                        "Вертикальный свайп вверх"
+                    }
+                    abs(horizontalDragOffset) > abs(verticalDragOffset) && horizontalDragOffset < 0 -> "Горизонтальный свайп вправо"
+                    abs(horizontalDragOffset) > abs(verticalDragOffset) && horizontalDragOffset > 0 -> "Горизонтальный свайп влево"
                     else -> "Непонятный жест"
                 })
                 return super.onFling(e1, e2, velocityX, velocityY)

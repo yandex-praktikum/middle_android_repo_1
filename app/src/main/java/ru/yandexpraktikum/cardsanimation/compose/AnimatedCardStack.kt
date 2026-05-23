@@ -54,14 +54,21 @@ fun AnimatedCardStack(cards: List<CardData>) {
                     },
                     onDragEnd = {
                         // TODO: Обработка жестов в заданиях 3 и 4
-                        val verticalMovement = startOffset.y - endOffset.y
-                        val horizontalMovement = startOffset.x - endOffset.x
+                        val verticalDragOffset = startOffset.y - endOffset.y
+                        val horizontalDragOffset = startOffset.x - endOffset.x
+
 
                         Log.d("ComposeGestures", when {
-                            abs(verticalMovement) > abs(horizontalMovement) && verticalMovement < 0 -> "Вертикальный свайп вниз"
-                            abs(verticalMovement) > abs(horizontalMovement) && verticalMovement > 0 -> "Вертикальный свайп вверх"
-                            abs(horizontalMovement) > abs(verticalMovement) && horizontalMovement < 0 -> "Горизонтальный свайп вправо"
-                            abs(horizontalMovement) > abs(verticalMovement) && horizontalMovement > 0 -> "Горизонтальный свайп влево"
+                            abs(verticalDragOffset) > abs(horizontalDragOffset) && verticalDragOffset < 0 -> {
+                                isRotated = false
+                                "Вертикальный свайп вниз"
+                            }
+                            abs(verticalDragOffset) > abs(horizontalDragOffset) && verticalDragOffset > 0 -> {
+                                isRotated = true
+                                "Вертикальный свайп вверх"
+                            }
+                            abs(horizontalDragOffset) > abs(verticalDragOffset) && horizontalDragOffset < 0 -> "Горизонтальный свайп вправо"
+                            abs(horizontalDragOffset) > abs(verticalDragOffset) && horizontalDragOffset > 0 -> "Горизонтальный свайп влево"
                             else -> "Непонятный жест"
                         })
 
