@@ -2,12 +2,12 @@ package ru.yandexpraktikum.cardsanimation.views
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import ru.yandexpraktikum.cardsanimation.model.CardData
-import kotlin.math.abs
+import ru.yandexpraktikum.cardsanimation.utils.SwipeDirection
+import ru.yandexpraktikum.cardsanimation.utils.handleDragEnd
 
 class AnimatedCardStackView @JvmOverloads constructor(
     context: Context,
@@ -122,21 +122,25 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
-                Log.d("ComposeGestures", when {
-                    abs(verticalDragOffset) > abs(horizontalDragOffset) && verticalDragOffset < 0 -> {
-                        isRotated = false
-                        updateCardPositions()
-                        "Вертикальный свайп вниз"
-                    }
-                    abs(verticalDragOffset) > abs(horizontalDragOffset) && verticalDragOffset > 0 -> {
+                val swipeDirection = handleDragEnd(
+                    verticalDragOffset = verticalDragOffset,
+                    horizontalDragOffset = horizontalDragOffset,
+                )
+                when (swipeDirection) {
+                    SwipeDirection.SWIPE_UP -> {
                         isRotated = true
                         updateCardPositions()
-                        "Вертикальный свайп вверх"
                     }
-                    abs(horizontalDragOffset) > abs(verticalDragOffset) && horizontalDragOffset < 0 -> "Горизонтальный свайп вправо"
-                    abs(horizontalDragOffset) > abs(verticalDragOffset) && horizontalDragOffset > 0 -> "Горизонтальный свайп влево"
-                    else -> "Непонятный жест"
-                })
+                    SwipeDirection.SWIPE_DOWN -> {
+                        isRotated = false
+                        updateCardPositions()
+                    }
+                    SwipeDirection.SWIPE_LEFT,
+                    SwipeDirection.SWIPE_RIGHT -> {
+                        setCards(reorderCards(cardDataList))
+                    }
+                    SwipeDirection.UNRECOGNIZED -> Unit
+                }
                 return super.onFling(e1, e2, velocityX, velocityY)
             }
         })

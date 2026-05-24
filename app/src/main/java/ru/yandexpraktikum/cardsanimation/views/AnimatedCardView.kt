@@ -29,12 +29,6 @@ class AnimatedCardView @JvmOverloads constructor(
         pivotY = height.toFloat()
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        pivotX = w / 2f
-        pivotY = h.toFloat()
-    }
-
     fun setCardData(cardData: CardData) {
         cardImageView.setImageResource(cardData.imageResId)
     }
