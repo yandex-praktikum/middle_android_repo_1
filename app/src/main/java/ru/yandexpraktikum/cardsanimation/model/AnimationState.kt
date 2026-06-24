@@ -13,6 +13,6 @@ data class AnimationState(
     val currentAnimatingCard: Int? = null
 )
 
-fun AnimationState.isStep1() = isAnimating && step == 1
-fun AnimationState.isStep2() = isAnimating && step == 2
-fun AnimationState.isStep3() = isAnimating && step == 3
+fun AnimationState.isMovingStep() = isAnimating && step == 1
+fun AnimationState.isToTopStep() = isAnimating && step == 2
+fun AnimationState.isFinalStep() = isAnimating && step == 3

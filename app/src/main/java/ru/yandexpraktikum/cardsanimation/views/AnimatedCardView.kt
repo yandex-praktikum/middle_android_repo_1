@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.cardview.widget.CardView
 import ru.yandexpraktikum.cardsanimation.Helper
+import ru.yandexpraktikum.cardsanimation.Helper.ANIM_DURATION_MS
 import ru.yandexpraktikum.cardsanimation.R
 import ru.yandexpraktikum.cardsanimation.model.CardData
 
@@ -70,7 +71,7 @@ class AnimatedCardView @JvmOverloads constructor(
 
          AnimatorSet().apply {
              playTogether(animatorX, animatorY)
-             duration = 1_000
+             duration = ANIM_DURATION_MS
              addListener(object : AnimatorListenerAdapter() {
                  override fun onAnimationEnd(animation: Animator) {
                      onComplete?.invoke()
@@ -94,7 +95,7 @@ class AnimatedCardView @JvmOverloads constructor(
 
          AnimatorSet().apply {
              playTogether(animatorX, animatorY, animatorZ)
-             duration = 1_000
+             duration = ANIM_DURATION_MS
              addListener(object : AnimatorListenerAdapter() {
                  override fun onAnimationEnd(animation: Animator) {
                      onComplete?.invoke()
@@ -108,7 +109,7 @@ class AnimatedCardView @JvmOverloads constructor(
      */
     fun adjustToFinalPosition(finalRotation: Float, finalStackPos: Int, onComplete: (() -> Unit)? = null) {
         ObjectAnimator.ofFloat(this, "rotation", rotation, finalRotation).apply {
-            duration = 1_000
+            duration = ANIM_DURATION_MS
             addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
                     setStackPosition(finalStackPos)

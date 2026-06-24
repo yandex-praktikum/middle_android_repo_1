@@ -7,6 +7,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import ru.yandexpraktikum.cardsanimation.Helper
+import ru.yandexpraktikum.cardsanimation.Helper.ANIM_DURATION_MS
 import ru.yandexpraktikum.cardsanimation.model.AnimationState
 import ru.yandexpraktikum.cardsanimation.model.CardData
 import ru.yandexpraktikum.cardsanimation.model.OffsetState
@@ -106,7 +107,7 @@ class AnimatedCardStackView @JvmOverloads constructor(
             cardView.pivotY = cardHeight
 
             // [Задание 1] движение карты
-            cardView.animateToRotation(targetRotation, 1_000)
+            cardView.animateToRotation(targetRotation, ANIM_DURATION_MS)
         }
     }
 

@@ -23,11 +23,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import ru.yandexpraktikum.cardsanimation.Helper
+import ru.yandexpraktikum.cardsanimation.Helper.ANIM_DURATION_MS
 import ru.yandexpraktikum.cardsanimation.model.AnimationState
 import ru.yandexpraktikum.cardsanimation.model.CardData
-import ru.yandexpraktikum.cardsanimation.model.isStep1
-import ru.yandexpraktikum.cardsanimation.model.isStep2
-import ru.yandexpraktikum.cardsanimation.model.isStep3
+import ru.yandexpraktikum.cardsanimation.model.isMovingStep
+import ru.yandexpraktikum.cardsanimation.model.isToTopStep
+import ru.yandexpraktikum.cardsanimation.model.isFinalStep
 
 @Composable
 fun AnimatedCard(
@@ -43,28 +44,28 @@ fun AnimatedCard(
     // [Задание 1] анимация поворота карты
     val rotationAnim by animateFloatAsState(
         targetValue = targetRotation,
-        animationSpec = tween(durationMillis = 1_000, easing = LinearEasing)
+        animationSpec = tween(durationMillis = ANIM_DURATION_MS.toInt(), easing = LinearEasing)
     ) {
         if (!shouldAnimated) return@animateFloatAsState
         when {
-            animationState.isStep3() -> onStepFinished.invoke(3)
+            animationState.isFinalStep() -> onStepFinished.invoke(3)
         }
     }
 
     // [Задание 5] движение карты
     val moveXAnim by animateFloatAsState(
-        targetValue = if (animationState.isStep1()) Helper.calculateMove(rotationAnim).first else 0f,
-        animationSpec = tween(durationMillis = 1_000, easing = LinearEasing)
+        targetValue = if (animationState.isMovingStep()) Helper.calculateMove(rotationAnim).first else 0f,
+        animationSpec = tween(durationMillis = ANIM_DURATION_MS.toInt(), easing = LinearEasing)
     ) {
         if (!shouldAnimated) return@animateFloatAsState
         when {
-            animationState.isStep1() -> onStepFinished.invoke(1)
-            animationState.isStep2() -> onStepFinished.invoke(2)
+            animationState.isMovingStep() -> onStepFinished.invoke(1)
+            animationState.isToTopStep() -> onStepFinished.invoke(2)
         }
     }
     val moveYAnim by animateFloatAsState(
-        targetValue = if (animationState.isStep1()) Helper.calculateMove(rotationAnim).second else 0f,
-        animationSpec = tween(durationMillis = 1_000, easing = LinearEasing)
+        targetValue = if (animationState.isMovingStep()) Helper.calculateMove(rotationAnim).second else 0f,
+        animationSpec = tween(durationMillis = ANIM_DURATION_MS.toInt(), easing = LinearEasing)
     )
 
     fun bringToFront() = shouldAnimated && animationState.isAnimating && animationState.step >= 2

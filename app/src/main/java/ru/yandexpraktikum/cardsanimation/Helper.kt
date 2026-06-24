@@ -8,6 +8,8 @@ import kotlin.math.sin
  */
 object Helper {
 
+    const val ANIM_DURATION_MS: Long = 1_000
+
     /**
      * Метод для вычисления поворота карты в конкретной позиции
      */
