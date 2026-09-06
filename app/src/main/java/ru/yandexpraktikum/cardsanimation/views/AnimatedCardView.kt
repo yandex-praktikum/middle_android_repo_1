@@ -1,7 +1,10 @@
 package ru.yandexpraktikum.cardsanimation.views
 
+import android.animation.Animator
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -13,10 +16,38 @@ class AnimatedCardView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : FrameLayout(context, attrs, defStyleAttr){
 
     val cardView: CardView
     private val cardImageView: ImageView
+
+    private var rotationAnimation : ObjectAnimator? = null
+    private var animationInProgress : Boolean = false
+
+    private val animatorListener = object : Animator.AnimatorListener{
+        override fun onAnimationStart(animation: Animator) {
+            animationInProgress = true
+        }
+
+        override fun onAnimationEnd(animation: Animator) {
+            Log.d("AnimatedCardStackView","onAnimationEnd" )
+            rotationAnimation?.removeListener(this)
+            animationInProgress = false
+
+        }
+
+        override fun onAnimationCancel(animation: Animator) {
+            Log.d("AnimatedCardStackView","onAnimationCancel" )
+            rotationAnimation?.removeListener(this)
+            animationInProgress = false
+        }
+
+        override fun onAnimationRepeat(animation: Animator) {
+
+        }
+
+    }
+
 
     init {
         LayoutInflater.from(context).inflate(R.layout.card_view, this, true)
@@ -41,6 +72,24 @@ class AnimatedCardView @JvmOverloads constructor(
     fun setStackPosition(index: Int) {
         cardView.cardElevation = (4 + index * 1).toFloat() * resources.displayMetrics.density
     }
+
+    fun animateToTargetRotation(targetRotation : Float){
+        if(animationInProgress){
+            return
+        }
+
+        //rotationAnimation?.cancel()
+        rotationAnimation = ObjectAnimator.ofFloat(this,"rotation",targetRotation)
+
+        rotationAnimation?.apply {
+            duration = 1000
+            addListener(animatorListener)
+
+         }?.start()
+
+    }
+
+
 
     // TODO: [Задание 1] Добавьте методы для анимации
     // Подсказка: используйте ObjectAnimator для плавной анимации
