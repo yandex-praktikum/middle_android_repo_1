@@ -1,6 +1,5 @@
 package ru.yandexpraktikum.cardsanimation.views
 
-import android.animation.ObjectAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.util.Log
@@ -22,6 +21,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
     private var isRotated = false
 
     private var distanceOffset = Offset(0f, 0f)
+
+    private var isAnimating = false
 
     private val gestureDetector: GestureDetector =
         GestureDetector(context, object : GestureDetector.OnGestureListener {
@@ -64,38 +65,37 @@ class AnimatedCardStackView @JvmOverloads constructor(
                 velocityY: Float
             ): Boolean {
                 Log.d("AnimatedCardStackView", "onFling $e1 $e2 $velocityX $velocityY")
-                detectDistanceOffset(distanceOffset)
+                handleDragOffset(distanceOffset)
                 return true
             }
 
         })
 
-    private fun detectDistanceOffset(offset: Offset) {
+    private fun handleDragOffset(offset: Offset) {
+        if(isAnimating){
+            return
+        }
         if(offset.x == 0f && offset.y == 0f){
             return
         }
         if (offset.y.absoluteValue > offset.x.absoluteValue) {
             //verticalScroll
-            if (offset.y > 0) {
-                //up
-                //Log.d("AnimatedCardStackView", "UP")
-                isRotated = false
-                animateCards()
-            } else {
-                //down
-                //Log.d("AnimatedCardStackView", "DOWN")
-                isRotated = true
-                animateCards()
+            Log.d("AnimatedCardStackView", "verticalSwipe")
+             isRotated = offset.y < 0
+            isAnimating = true
+            animateAllCardsRotation{
+                Log.d("AnimatedCardStackView", "animateAllCardsRotation complete")
+                isAnimating = false
             }
         } else {
             //horizontalScroll
-            if (offset.x > 0) {
-                //left
-                Log.d("AnimatedCardStackView", "LEFT")
-            } else {
-                //right
-                Log.d("AnimatedCardStackView", "RIGHT")
+            Log.d("AnimatedCardStackView", "horizontalSwipe")
+            isAnimating = true
+            startCardSwapAnimation(cards.first()){
+                Log.d("AnimatedCardStackView", "startCardSwapAnimation complete")
+                isAnimating = false
             }
+
         }
         distanceOffset = Offset(0f, 0f)
     }
@@ -110,7 +110,7 @@ class AnimatedCardStackView @JvmOverloads constructor(
         cardDataList.forEachIndexed { index, cardData ->
             val cardView = AnimatedCardView(context).apply {
                 setCardData(cardData)
-                setStackPosition(index)
+                setElevationStackPosition(index)
             }
             cards.add(cardView)
             addView(cardView)
@@ -118,6 +118,18 @@ class AnimatedCardStackView @JvmOverloads constructor(
         // Возврат в исходное положение
         isRotated = false
         updateCardPositions()
+    }
+
+    private fun updateCardOrder(){
+        cardDataList = reorderCards(cardDataList)
+
+        val bottomCardView = cards.removeAt(0)
+        cards.add(bottomCardView)
+
+        cardDataList.forEachIndexed { index, cardData ->
+
+            cards[index].setCardData(cardData)
+        }
     }
 
     private fun clearCards() {
@@ -153,8 +165,8 @@ class AnimatedCardStackView @JvmOverloads constructor(
             // Расчёт финальной позиции (для эффекта раскрытой колоды карт)
             val targetRotation = getTargetRotation(cardCount, index)
 
-            val cardWidth = 100f * resources.displayMetrics.density
-            val cardHeight = 160f * resources.displayMetrics.density
+            val cardWidth = AnimatedCardView.CARD_WIDTH * resources.displayMetrics.density
+            val cardHeight = AnimatedCardView.CARD_HEIGHT * resources.displayMetrics.density
             val sharedX = width / 2f - cardWidth / 2f
             val sharedY = height / 2f - cardHeight / 2f
 
@@ -169,16 +181,52 @@ class AnimatedCardStackView @JvmOverloads constructor(
         }
     }
 
-    private fun animateCards() {
+    private fun animateAllCardsRotation(onComplete: (() -> Unit)? = null) {
         val cardCount = cards.size
 
+        var completedCount = 0
         cards.forEachIndexed { index, cardView ->
 
             // Расчёт финальной позиции (для эффекта раскрытой колоды карт)
             val targetRotation = getTargetRotation(cardCount, index)
 
-            cardView.animateToTargetRotation(targetRotation = targetRotation)
+            cardView.animateToTargetRotation(targetRotation = targetRotation){
+                completedCount++
+                if(completedCount == cardCount){
+                    onComplete?.invoke()
+                }
+            }
+
         }
+
+
+    }
+
+    private fun startCardSwapAnimation(bottomCard: AnimatedCardView, onComplete: (() -> Unit)? = null) {
+
+        //animationStep = 1
+        bottomCard.moveCardRight {
+            //animationStep = 2
+            bringCardToFront(bottomCard)
+            bottomCard.moveCardToTop {
+                //animationStep = 3
+                updateCardOrder()
+                animateAllCardsRotation{
+                    Log.d("AnimatedCardStackView", "animateAllCardsRotation complete")
+                    cards.forEachIndexed { index, cardData ->
+                        cards[index].setElevationStackPosition(index)
+                    }
+                    onComplete?.invoke()
+                }
+
+            }
+        }
+    }
+
+    private fun bringCardToFront(card: AnimatedCardView) {
+        card.bringToFront()
+        val maxElevation = (4 + cards.size + 20).toFloat() * resources.displayMetrics.density
+        card.cardView.cardElevation = maxElevation
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
@@ -208,16 +256,9 @@ class AnimatedCardStackView @JvmOverloads constructor(
 //        Log.d("AnimatedCardStackView", "event = ${event.x}")
         if (event.action == MotionEvent.ACTION_UP) {
             Log.d("AnimatedCardStackView", "action = ACTION_UP")
-            detectDistanceOffset(distanceOffset)
+            handleDragOffset(distanceOffset)
         }
         return gestureDetector.onTouchEvent(event) || super.onTouchEvent(event)
-    }
-
-    private fun startCardSwapAnimation(bottomCard: AnimatedCardView) {
-        // TODO: [Задание 5] Добавьте анимацию перетасовки карт
-        // На данном этапе просто быстро двигаем нижнюю карту наверх
-        cardDataList = reorderCards(cardDataList)
-        setupCards()
     }
 
     // Простая функция перестановки карт
