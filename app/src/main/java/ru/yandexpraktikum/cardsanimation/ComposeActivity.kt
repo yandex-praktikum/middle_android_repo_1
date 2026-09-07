@@ -66,7 +66,7 @@ fun AnimatedCardScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        AnimatedCardStack(cards = cards)
+        AnimatedCardStack(inputCards = cards)
 
         Spacer(modifier = Modifier.height(60.dp))
 
